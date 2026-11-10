@@ -1,0 +1,696 @@
+<title>AquaCare 360</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: top bar + centered 1120px column. Public pages are stacked sections; the signed-in area is a tab bar over one working panel. */
+:root{
+  --bg:#06121b; --surface:#0c1e2c; --surface2:#112b3d; --line:#1b3a50;
+  --fg:#e5f0f6; --muted:#8aa6b8; --accent:#2fd3c6; --accent-ink:#031e1c;
+  --ok:#3fdc98; --warn:#f6bb45; --bad:#ff6b6b;
+  --display:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;min-width:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:16px}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font-family:var(--display);font-weight:700;font-size:19px}
+.brand svg{width:30px;height:30px;flex:none}
+.nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nav .lnk{background:none;border:0;color:var(--muted);padding:8px 10px;cursor:pointer;border-radius:8px}
+.nav .lnk:hover{color:var(--fg)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);padding:10px 16px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:#5a2a2f;color:var(--bad)}
+.btn.sm{padding:6px 12px;font-size:13px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:40px;align-items:center;padding-block:48px 56px}
+.hero h1{font-size:clamp(34px,6vw,60px);margin:14px 0 16px}
+.hero p.lead{font-size:17px;color:var(--muted);max-width:52ch}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.panel .head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:12px;flex-wrap:wrap}
+.reads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.read{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.read .n{font-size:12px;color:var(--muted)}
+.read .v{font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.read .u{font-size:12px;color:var(--muted);margin-left:4px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--ok)}
+.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+
+/* sections */
+section.s{padding-block:44px;border-top:1px solid var(--line)}
+section.s>.wrap>h2{font-size:clamp(24px,3.6vw,34px);margin:8px 0 12px}
+section.s>.wrap>p.sub{color:var(--muted);max-width:62ch;margin-bottom:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.card h3{font-size:17px;margin-bottom:6px}
+.card p{color:var(--muted);font-size:14px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;counter-reset:st}
+.steps .card{position:relative}
+.steps .card::before{counter-increment:st;content:counter(st);font-family:var(--mono);color:var(--accent);font-size:13px;display:block;margin-bottom:8px}
+.note{border:1px solid #5c4a1f;background:#21190a;color:#f3d795;border-radius:12px;padding:14px 16px;font-size:14px}
+.limits{width:100%;border-collapse:collapse;font-size:14px;min-width:460px}
+.limits th,.limits td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+.limits th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.scroll-x{overflow-x:auto;max-width:100%}
+
+/* plans */
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.plan{display:flex;flex-direction:column;gap:12px}
+.plan.hot{border-color:var(--accent)}
+.price{font-family:var(--mono);font-size:34px;font-weight:600}
+.price small{font-size:13px;color:var(--muted);font-family:var(--body);font-weight:400;margin-left:6px}
+.plan ul{list-style:none;padding:0;margin:0;display:grid;gap:6px;color:var(--muted);font-size:14px}
+.plan li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:10px;vertical-align:middle}
+.plan .btn{margin-top:auto}
+
+/* auth */
+.auth{max-width:440px;margin:28px auto 56px}
+.auth h1{font-size:28px;margin-bottom:6px}
+form.f{display:grid;gap:14px;margin-top:20px}
+.fld{display:grid;gap:6px;min-width:0}
+.fld label{font-size:13px;color:var(--muted)}
+.fld input,.fld select,.fld textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+.fld textarea{min-height:110px;resize:vertical}
+.err{color:var(--bad);font-size:14px;min-height:20px}
+.okmsg{color:var(--ok);font-size:14px}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.switch{display:flex;gap:14px;flex-wrap:wrap;margin-top:18px;font-size:14px;color:var(--muted)}
+
+/* app */
+.app-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:14px;border-bottom:1px solid var(--line)}
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+.pill.ok{color:var(--ok);border-color:#1f5a40;background:#0b2a1e}
+.pill.warn{color:var(--warn);border-color:#5c4a1f;background:#241b09}
+.pill.bad{color:var(--bad);border-color:#5a2a2f;background:#2a1013}
+.pill.mut{color:var(--muted)}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-block:12px;max-width:100%}
+.tab{background:none;border:1px solid transparent;color:var(--muted);padding:8px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:500}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{background:var(--surface2);border-color:var(--line);color:var(--fg)}
+.count{background:var(--bad);color:#fff;border-radius:999px;font-size:11px;padding:0 6px;margin-left:6px}
+.main{padding-block:12px 56px;display:grid;gap:18px;min-width:0}
+.main h2{font-size:24px}
+.banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-radius:14px;padding:16px 18px;border:1px solid var(--line);background:var(--surface)}
+.banner.ok{border-color:#1f5a40}.banner.warn{border-color:#5c4a1f}.banner.bad{border-color:#5a2a2f}
+.banner b{font-family:var(--display);font-size:20px}
+.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.sensor{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left;cursor:pointer;display:grid;gap:6px;min-width:0}
+.sensor[aria-pressed="true"]{border-color:var(--accent)}
+.sensor .t{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.sensor .v{font-family:var(--mono);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums}
+.sensor .v small{font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
+svg.chart{width:100%;height:auto;display:block}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .axis{fill:var(--muted);font-size:12px;font-family:var(--mono)}
+.chart .band{fill:var(--ok);opacity:.12}
+.chart .line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+.chart .end{fill:var(--accent)}
+.list{display:grid;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:6px;min-width:0}
+.item .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 8px;color:var(--muted)}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--muted);text-align:center}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.tbl th,.tbl td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat .v{font-family:var(--mono);font-size:28px;font-weight:600}
+.stat .l{color:var(--muted);font-size:13px}
+pre.code{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;max-width:100%;margin:0}
+.foot{border-top:1px solid var(--line);padding-block:28px 40px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--surface2);border:1px solid var(--bad);border-radius:12px;padding:12px 16px;max-width:calc(100% - 32px);z-index:20;font-size:14px}
+#toast[hidden]{display:none}
+@media (max-width:820px){.hero{grid-template-columns:minmax(0,1fr);gap:28px;padding-block:28px 40px}}
+@media (prefers-reduced-motion:no-preference){.btn,.sensor,.tab{transition:border-color .15s,background .15s}}
+</style>
+<div id="app"></div>
+<div id="toast" role="status" hidden></div>
+<script type="text/plain" id="fwsnip">#include <WiFi.h>
+#include <WebServer.h>
+
+WebServer server(80);
+
+void sendReadings() {
+  String json = "{\"ph\":" + String(readPH(), 2)
+    + ",\"turbidity\":" + String(readNTU(), 1)
+    + ",\"tds\":" + String(readTDS(), 0)
+    + ",\"temperature\":" + String(readTemp(), 1) + "}";
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", json);
+}
+
+void setup() {
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) delay(300);
+  server.on("/readings", sendReadings);
+  server.begin();
+}
+
+void loop() { server.handleClient(); }</script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- storage (per browser, demo only) ---------- */
+  var mem = {};
+  var S = {
+    get: function (k, d) {
+      try { var v = localStorage.getItem('ac360:' + k); if (v) return JSON.parse(v); } catch (e) {}
+      return (k in mem) ? mem[k] : d;
+    },
+    set: function (k, v) {
+      mem[k] = v;
+      try { localStorage.setItem('ac360:' + k, JSON.stringify(v)); } catch (e) {}
+    }
+  };
+  var seedAdmin = { name: 'Main Administrator', email: 'admin@aquacare360.demo', password: 'admin123', main: true };
+  var seedReviews = [
+    { id: 'r1', name: 'Sample review', rating: 5, text: 'Turbidity alert reached me within a minute of the tank being refilled. Easy to read.', time: Date.now() - 86400000 * 3, sample: true },
+    { id: 'r2', name: 'Sample review', rating: 4, text: 'Dashboard is clear. I would like Telugu language support for our village.', time: Date.now() - 86400000, sample: true }
+  ];
+  var DB = {
+    users: S.get('users', []),
+    admins: S.get('admins', [seedAdmin]),
+    alerts: S.get('alerts', []),
+    problems: S.get('problems', []),
+    reviews: S.get('reviews', seedReviews)
+  };
+  if (!DB.admins.length) DB.admins = [seedAdmin];
+  function save() { Object.keys(DB).forEach(function (k) { S.set(k, DB[k]); }); }
+  var session = S.get('session', null);
+  var device = S.get('device', { mode: 'demo', url: '' });
+
+  /* ---------- helpers ---------- */
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmt(t) {
+    return new Date(t).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function stars(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
+
+  var DROP = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6ff0e4"/><stop offset="1" stop-color="#1b9fd6"/></linearGradient></defs><path d="M12 2.2c3.7 4.4 6.2 7.7 6.2 11a6.2 6.2 0 0 1-12.4 0c0-3.3 2.5-6.6 6.2-11z" fill="url(#dg)"/><path d="M8.6 14.2a3.4 3.4 0 0 0 2.6 3.2" fill="none" stroke="#06121b" stroke-width="1.6" stroke-linecap="round" opacity=".55"/></svg>';
+
+  /* ---------- sensors ---------- */
+  var KEYS = ['ph', 'turb', 'tds', 'temp'];
+  var SENS = {
+    ph:   { name: 'pH',          unit: '',    dec: 2, min: 4, max: 10,   ok: [6.5, 8.5], warn: [6.0, 9.0],
+            what: 'Acidity or alkalinity of the water. Drifts when pipes corrode or when chemicals enter the supply.', lim: '6.5 to 8.5' },
+    turb: { name: 'Turbidity',   unit: 'NTU', dec: 1, min: 0, max: 20,   ok: [0, 3],     warn: [0, 5],
+            what: 'How cloudy the water is. A sudden rise often follows a pipe break, flooding or a dirty tank.', lim: 'up to 3 NTU' },
+    tds:  { name: 'TDS',         unit: 'ppm', dec: 0, min: 0, max: 1200, ok: [0, 500],   warn: [0, 900],
+            what: 'Total dissolved solids, an estimate of salts and minerals dissolved in the water.', lim: 'up to 500 ppm' },
+    temp: { name: 'Temperature', unit: '°C',  dec: 1, min: 0, max: 45,   ok: [10, 30],   warn: [5, 35],
+            what: 'Water temperature. Warm stored water supports faster growth of micro-organisms.', lim: '10 to 30 °C' }
+  };
+  var LV = ['Within limits', 'Check water', 'Alert'];
+  var CL = ['ok', 'warn', 'bad'];
+  function level(k, v) {
+    var s = SENS[k];
+    if (v >= s.ok[0] && v <= s.ok[1]) return 0;
+    if (v >= s.warn[0] && v <= s.warn[1]) return 1;
+    return 2;
+  }
+  function fv(k, v) { return Number(v).toFixed(SENS[k].dec); }
+
+  /* ---------- live readings (demo simulation or ESP32) ---------- */
+  var MAXH = 40;
+  var TARGET_OK = { ph: 7.3, turb: 1.8, tds: 230, temp: 26 };
+  var TARGET_BAD = { ph: 5.7, turb: 14, tds: 1000, temp: 31 };
+  var NOISE = { ph: 0.12, turb: 0.4, tds: 14, temp: 0.3 };
+  var cur = { ph: 7.3, turb: 1.8, tds: 230, temp: 26 };
+  var hist = { ph: [], turb: [], tds: [], temp: [] };
+  var lastLv = { ph: 0, turb: 0, tds: 0, temp: 0 };
+  var contaminated = false;
+  var deviceMsg = { ok: true, t: '' };
+
+  function clamp(k, v) { var s = SENS[k]; return Math.min(s.max, Math.max(s.min, v)); }
+  function stepDemo() {
+    var tgt = contaminated ? TARGET_BAD : TARGET_OK;
+    var n = {};
+    KEYS.forEach(function (k) {
+      n[k] = clamp(k, cur[k] + (tgt[k] - cur[k]) * 0.22 + (Math.random() - 0.5) * NOISE[k]);
+    });
+    return n;
+  }
+  function pushHist(r) {
+    KEYS.forEach(function (k) {
+      hist[k].push(r[k]);
+      if (hist[k].length > MAXH) hist[k].shift();
+    });
+  }
+  for (var i = 0; i < MAXH; i++) { cur = stepDemo(); pushHist(cur); }
+
+  function currentUser() {
+    if (!session || session.role !== 'customer') return null;
+    return DB.users.filter(function (u) { return u.email === session.email; })[0] || null;
+  }
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.h);
+    toast.h = setTimeout(function () { t.hidden = true; }, 5000);
+  }
+  function applyReading(r) {
+    cur = r; pushHist(r);
+    var u = currentUser(), made = false;
+    KEYS.forEach(function (k) {
+      var lv = level(k, r[k]);
+      if (lv > lastLv[k] && lv > 0 && u) {
+        DB.alerts.push({ id: uid(), email: u.email, customer: u.name, sensor: k, level: lv, value: r[k], time: Date.now() });
+        made = true;
+        toast((lv === 2 ? 'Alert: ' : 'Check water: ') + SENS[k].name + ' ' + fv(k, r[k]) + ' ' + SENS[k].unit);
+      }
+      lastLv[k] = lv;
+    });
+    if (made) save();
+    renderLive();
+    if (made) {
+      if (ui.view === 'dashboard' && session && session.role === 'customer' && ui.tab === 'alerts') render();
+      else updateBadge();
+    }
+  }
+  function tick() {
+    if (device.mode === 'live' && device.url) {
+      fetch(device.url, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+        var n = { ph: +j.ph, turb: +(j.turbidity != null ? j.turbidity : j.turb), tds: +j.tds, temp: +(j.temperature != null ? j.temperature : j.temp) };
+        for (var i = 0; i < KEYS.length; i++) { if (!isFinite(n[KEYS[i]])) throw new Error('bad'); }
+        deviceMsg = { ok: true, t: 'Receiving live readings from your ESP32.' };
+        applyReading(n);
+        updateDeviceMsg();
+      }).catch(function () {
+        deviceMsg = { ok: false, t: 'Could not read from the device, so demo values are shown. Browsers block plain http:// devices on secure pages and the host may block outside requests. Serve the ESP32 data over HTTPS or through a cloud endpoint.' };
+        applyReading(stepDemo());
+        updateDeviceMsg();
+      });
+    } else {
+      applyReading(stepDemo());
+    }
+  }
+  function updateDeviceMsg() {
+    var el = $('#devMsg');
+    if (el) { el.className = deviceMsg.ok ? 'okmsg' : 'err'; el.textContent = deviceMsg.t; }
+  }
+
+  /* ---------- UI state & routing ---------- */
+  var ui = { view: 'home', tab: 'overview', sensor: 'ph', checkout: null };
+  var VIEWS = ['home', 'login', 'register', 'admin-login', 'dashboard'];
+
+  function resolveView(v) {
+    if (VIEWS.indexOf(v) < 0) v = 'home';
+    if (v === 'dashboard' && !session) v = 'login';
+    if ((v === 'login' || v === 'register' || v === 'admin-login') && session) v = 'dashboard';
+    return v;
+  }
+  function setView(v) {
+    v = resolveView(v);
+    ui.view = v;
+    render();
+    window.scrollTo(0, 0);
+  }
+  function go(v) {
+    v = resolveView(v);
+    try { if (location.hash !== '#' + v) location.hash = v; } catch (e) {}
+    setView(v);
+  }
+  window.addEventListener('hashchange', function () {
+    var v = resolveView(location.hash.slice(1) || 'home');
+    if (v !== ui.view) setView(v);
+  });
+
+  /* ---------- views: shared pieces ---------- */
+  function topBar() {
+    var right;
+    if (session) {
+      right = '<button class="btn sm primary" data-act="go" data-to="dashboard">Dashboard</button><button class="btn sm" data-act="logout">Log out</button>';
+    } else {
+      right = '<button class="lnk" data-act="go" data-to="admin-login">Admin</button><button class="btn sm" data-act="go" data-to="login">Log in</button><button class="btn sm primary" data-act="go" data-to="register">Register</button>';
+    }
+    var links = ui.view === 'home'
+      ? '<button class="lnk" data-act="scroll" data-to="how">How it works</button><button class="lnk" data-act="scroll" data-to="sensors">Sensors</button><button class="lnk" data-act="scroll" data-to="plans">Plans</button>'
+      : '';
+    return '<div class="wrap bar"><button class="brand" data-act="go" data-to="home" aria-label="AquaCare 360 home">' + DROP + '<span>AquaCare 360</span></button><div class="nav">' + links + right + '</div></div>';
+  }
+  function footer() {
+    return '<div class="wrap foot"><span>AquaCare 360 · Smart Water &amp; Community Health System</span><span>GITAM student prototype. Demo data, no real payments or messages.</span></div>';
+  }
+  function pill(l) { return '<span class="pill ' + CL[l] + '"><span class="dot ' + CL[l] + '"></span>' + LV[l] + '</span>'; }
+  function overall() {
+    var m = 0;
+    KEYS.forEach(function (k) { m = Math.max(m, level(k, cur[k])); });
+    return m;
+  }
+
+  var PLANS = [
+    { k: 'monthly', name: 'Monthly', price: 499, per: 'per month', note: 'Pay month to month' },
+    { k: 'yearly', name: 'Yearly', price: 4999, per: 'per year', note: 'Saves ₹989 compared with 12 monthly payments', hot: true },
+    { k: 'lifetime', name: 'Lifetime', price: 6999, per: 'one-time', note: 'Pay once, no renewals' }
+  ];
+  var PLAN_FEATS = ['pH, turbidity, TDS and temperature readings', 'Alerts to you and the administrators', 'Problem reports and reviews', 'Reading history and charts'];
+  function planCards(mode) {
+    var u = currentUser();
+    return '<div class="plans">' + PLANS.map(function (p) {
+      var active = u && u.plan && u.plan.type === p.k;
+      var btn;
+      if (mode === 'home') btn = '<button class="btn primary" data-act="choose" data-plan="' + p.k + '">Choose ' + p.name + '</button>';
+      else if (active) btn = '<button class="btn" disabled>Current plan</button>';
+      else btn = '<button class="btn primary" data-act="buy" data-plan="' + p.k + '">Buy ' + p.name + '</button>';
+      return '<div class="card plan' + (p.hot ? ' hot' : '') + '"><div><h3>' + p.name + '</h3><div class="muted" style="font-size:13px">' + p.note + '</div></div>' +
+        '<div class="price">₹' + p.price.toLocaleString('en-IN') + '<small>' + p.per + '</small></div><ul>' +
+        PLAN_FEATS.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul>' + btn + '</div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------- views: live readings ---------- */
+  function heroPanel() {
+    return '<div class="head"><span>Demo household unit</span><span>' + pill(overall()) + '</span></div><div class="reads">' +
+      KEYS.map(function (k) {
+        var l = level(k, cur[k]);
+        return '<div class="read"><div class="n"><span class="dot ' + CL[l] + '"></span> ' + SENS[k].name + '</div><div><span class="v">' + fv(k, cur[k]) + '</span><span class="u">' + SENS[k].unit + '</span></div></div>';
+      }).join('') + '</div>';
+  }
+  function chart(k) {
+    var s = SENS[k], d = hist[k], W = 480, H = 240, L = 48, R = 14, T = 14, B = 26;
+    function x(i) { return L + (W - L - R) * ((MAXH - d.length + i) / (MAXH - 1)); }
+    function y(v) { return T + (H - T - B) * (1 - (clamp(k, v) - s.min) / (s.max - s.min)); }
+    var out = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + s.name + ' over the last ' + d.length + ' readings">';
+    out += '<rect class="band" x="' + L + '" y="' + y(s.ok[1]).toFixed(1) + '" width="' + (W - L - R) + '" height="' + (y(s.ok[0]) - y(s.ok[1])).toFixed(1) + '"/>';
+    for (var j = 0; j <= 4; j++) {
+      var v = s.min + (s.max - s.min) * j / 4, yy = y(v).toFixed(1);
+      out += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '"/><text class="axis" x="' + (L - 8) + '" y="' + (+yy + 4) + '" text-anchor="end">' + (s.dec > 0 && s.max < 20 ? v.toFixed(s.max <= 10 ? 1 : 0) : v.toFixed(0)) + '</text>';
+    }
+    out += '<text class="axis" x="' + L + '" y="' + (H - 6) + '">older</text><text class="axis" x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">now</text>';
+    out += '<polyline class="line" points="' + d.map(function (p, i) { return x(i).toFixed(1) + ',' + y(p).toFixed(1); }).join(' ') + '"/>';
+    out += '<circle class="end" r="4.5" cx="' + x(d.length - 1).toFixed(1) + '" cy="' + y(d[d.length - 1]).toFixed(1) + '"/></svg>';
+    return out;
+  }
+  function liveHTML() {
+    var ov = overall();
+    var msg = ['All four readings are inside the demo limits.', 'At least one reading is close to its limit.', 'At least one reading is outside its limit.'][ov];
+    var h = '<div class="banner ' + CL[ov] + '"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase">Water quality screening status</div><b>' + LV[ov] + '</b><div class="muted" style="font-size:14px">' + msg + '</div></div>' + pill(ov) + '</div>';
+    h += '<div class="sensors">' + KEYS.map(function (k) {
+      var l = level(k, cur[k]);
+      return '<button class="sensor" data-act="sensor" data-k="' + k + '" aria-pressed="' + (ui.sensor === k) + '"><div class="t"><span>' + SENS[k].name + '</span>' + pill(l) + '</div><div class="v">' + fv(k, cur[k]) + '<small>' + SENS[k].unit + '</small></div><div class="muted" style="font-size:12px">Limit: ' + SENS[k].lim + '</div></button>';
+    }).join('') + '</div>';
+    h += '<div class="panel"><div class="head"><span>' + SENS[ui.sensor].name + ', last ' + hist[ui.sensor].length + ' readings (shaded band is the within-limits range)</span></div>' + chart(ui.sensor) + '</div>';
+    return h;
+  }
+  function renderLive() {
+    var a = $('#live'); if (a) a.innerHTML = liveHTML();
+    var h = $('#heroLive'); if (h) h.innerHTML = heroPanel();
+  }
+  function updateBadge() {
+    var b = $('#alertBadge'), u = currentUser();
+    if (!b || !u) return;
+    var n = DB.alerts.filter(function (a) { return a.email === u.email; }).length;
+    b.textContent = n; b.hidden = n === 0;
+  }
+
+  /* ---------- views: public ---------- */
+  function homeView() {
+    var h = '<div class="wrap hero"><div><span class="badge"><span class="dot"></span> Smart Water &amp; Community Health System</span><h1>Know when your household water changes.</h1>' +
+      '<p class="lead">AquaCare 360 keeps an ESP32 unit with four sensors in your household water line. When a reading moves outside its limit, you and the administrators are notified.</p>' +
+      '<div class="cta"><button class="btn primary" data-act="go" data-to="register">Create customer account</button><button class="btn" data-act="go" data-to="login">Customer log in</button><button class="btn ghost" data-act="go" data-to="admin-login">Administrator</button></div></div>' +
+      '<div class="panel" id="heroLive">' + heroPanel() + '</div></div>';
+    h += '<section class="s" id="how"><div class="wrap"><span class="eyebrow">How it works</span><h2>From the tap to a message</h2><p class="sub">Built for households, villages and rural communities where a contaminated supply is usually noticed only after people fall ill.</p><div class="steps">' +
+      '<div class="card"><h3>Sensors read the water</h3><p>pH, turbidity, TDS and temperature probes sit in the household line.</p></div>' +
+      '<div class="card"><h3>ESP32 checks the limits</h3><p>The microcontroller compares each reading with its safe range and shows the values on an LCD with LED and buzzer warnings.</p></div>' +
+      '<div class="card"><h3>The website records it</h3><p>Readings reach your dashboard over Wi-Fi. Any change outside limits becomes an alert.</p></div>' +
+      '<div class="card"><h3>You and admins are told</h3><p>The registered customer and the administrators are notified so the problem can be followed up.</p></div></div></div></section>';
+    h += '<section class="s" id="sensors"><div class="wrap"><span class="eyebrow">Sensors</span><h2>Four readings, one status</h2><p class="sub">Each sensor has a within-limits range and a wider check-water range. These are demo limits for the prototype.</p><div class="grid">' +
+      KEYS.map(function (k) { return '<div class="card"><h3>' + SENS[k].name + '</h3><p>' + SENS[k].what + '</p></div>'; }).join('') + '</div>' +
+      '<div class="card scroll-x" style="margin-top:14px;padding:6px 6px"><table class="limits"><thead><tr><th>Sensor</th><th>Within limits</th><th>Check water</th><th>Alert</th></tr></thead><tbody>' +
+      KEYS.map(function (k) {
+        var s = SENS[k], cw = k === 'ph' ? '6.0 to 6.5 or 8.5 to 9.0' : k === 'turb' ? '3 to 5 NTU' : k === 'tds' ? '500 to 900 ppm' : '5 to 10 or 30 to 35 °C';
+        var al = k === 'ph' ? 'below 6.0 or above 9.0' : k === 'turb' ? 'above 5 NTU' : k === 'tds' ? 'above 900 ppm' : 'below 5 or above 35 °C';
+        return '<tr><td>' + s.name + '</td><td>' + s.lim + '</td><td>' + cw + '</td><td>' + al + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="note" style="margin-top:14px"><b>Screening only.</b> These four readings cannot detect bacteria or viruses, so a clear, in-limit sample can still carry disease-causing organisms. AquaCare 360 gives an early warning. It does not certify water as safe to drink.</div></div></section>';
+    h += '<section class="s"><div class="wrap"><span class="eyebrow">Features</span><h2>Everything after the sensor</h2><div class="grid">' +
+      '<div class="card"><h3>Customer dashboard</h3><p>Live readings, a status banner and charts for every household.</p></div>' +
+      '<div class="card"><h3>Alerts</h3><p>A record of every check-water and alert event, with the channels used.</p></div>' +
+      '<div class="card"><h3>Problem reports</h3><p>Customers describe an issue and administrators mark it resolved.</p></div>' +
+      '<div class="card"><h3>Reviews</h3><p>Customers rate the service and see what others say.</p></div>' +
+      '<div class="card"><h3>Separate administrator login</h3><p>Multiple administrators manage customers, alerts and reports.</p></div>' +
+      '<div class="card"><h3>Demo and live modes</h3><p>Show the concept with simulated readings, then point the site at the ESP32.</p></div></div></div></section>';
+    h += '<section class="s" id="plans"><div class="wrap"><span class="eyebrow">Plans</span><h2>Choose how you pay</h2><p class="sub">Prices in Indian rupees. Checkout in this prototype is a demo and takes no payment.</p>' + planCards('home') + '</div></section>';
+    return h;
+  }
+  function authView(kind) {
+    var cfg = {
+      login: { t: 'Customer log in', s: 'See your household water readings.', id: 'login-form', b: 'Log in', fields: '<div class="fld"><label for="lg-email">Email</label><input id="lg-email" type="email" autocomplete="email" required></div><div class="fld"><label for="lg-pass">Password</label><input id="lg-pass" type="password" autocomplete="current-password" required></div>',
+        sw: '<button class="lnk btn sm ghost" data-act="go" data-to="register">New customer? Register</button><button class="btn sm ghost" data-act="go" data-to="admin-login">Administrator log in</button>' },
+      'admin-login': { t: 'Administrator log in', s: 'Administrators manage customers, alerts and reports.', id: 'admin-login-form', b: 'Log in as administrator', fields: '<div class="fld"><label for="ad-email">Administrator email</label><input id="ad-email" type="email" autocomplete="username" required></div><div class="fld"><label for="ad-pass">Password</label><input id="ad-pass" type="password" autocomplete="current-password" required></div>',
+        sw: '<button class="btn sm ghost" data-act="go" data-to="login">Customer log in</button>', hint: '<div class="note" style="margin-top:16px;font-size:13px">Demo administrator: <span class="mono">admin@aquacare360.demo</span> / <span class="mono">admin123</span>. These details are visible in the page code, so use this prototype with sample data only.</div>' },
+      register: { t: 'Create customer account', s: 'Register your household to see readings and alerts.', id: 'register-form', b: 'Register', fields: '<div class="fld"><label for="rg-name">Full name</label><input id="rg-name" autocomplete="name" required></div><div class="row2"><div class="fld"><label for="rg-email">Email</label><input id="rg-email" type="email" autocomplete="email" required></div><div class="fld"><label for="rg-phone">Mobile number</label><input id="rg-phone" type="tel" autocomplete="tel" required></div></div><div class="fld"><label for="rg-loc">Village or area</label><input id="rg-loc" required></div><div class="fld"><label for="rg-pass">Password (6 or more characters)</label><input id="rg-pass" type="password" autocomplete="new-password" required></div>',
+        sw: '<button class="btn sm ghost" data-act="go" data-to="login">Already registered? Log in</button>' }
+    }[kind];
+    return '<div class="auth panel"><h1>' + cfg.t + '</h1><p class="muted">' + cfg.s + '</p><form class="f" id="' + cfg.id + '" novalidate>' + cfg.fields + '<div class="err" id="formErr" role="alert"></div><button class="btn primary" type="submit">' + cfg.b + '</button></form>' + (cfg.hint || '') + '<div class="switch">' + cfg.sw + '</div></div>';
+  }
+
+  /* ---------- views: customer ---------- */
+  function customerTabs() {
+    return [['overview', 'Water'], ['alerts', 'Alerts'], ['report', 'Report a problem'], ['reviews', 'Reviews'], ['plan', 'Subscription'], ['device', 'Device']];
+  }
+  function customerView(u) {
+    var tabs = customerTabs().map(function (t) {
+      var extra = t[0] === 'alerts' ? '<span class="count" id="alertBadge" hidden></span>' : '';
+      return '<button class="tab" role="tab" data-act="tab" data-t="' + t[0] + '" aria-selected="' + (ui.tab === t[0]) + '">' + t[1] + extra + '</button>';
+    }).join('');
+    var body = '';
+    var mine, i;
+    if (ui.tab === 'overview') {
+      body = '<div><h2>Hello, ' + esc(u.name.split(' ')[0]) + '</h2><p class="muted">' + esc(u.location) + ' · ' + (device.mode === 'live' ? 'Live ESP32 mode' : 'Demo readings') + '</p></div><div id="live" class="main" style="padding:0">' + liveHTML() + '</div>' +
+        (device.mode === 'demo' ? '<div class="panel"><div class="head"><span>Demo control for presentations</span></div><button class="btn ' + (contaminated ? 'danger' : '') + '" data-act="sim">' + (contaminated ? 'Return water to normal' : 'Simulate contaminated water') + '</button><p class="muted" style="margin-top:10px;font-size:13px">Pushes turbidity, TDS and pH outside their limits so you can show how an alert is raised and recorded.</p></div>' : '');
+    } else if (ui.tab === 'alerts') {
+      mine = DB.alerts.filter(function (a) { return a.email === u.email; }).sort(function (a, b) { return b.time - a.time; });
+      body = '<h2>Alerts</h2><p class="muted">Every time a reading crosses into check-water or alert. Administrators see the same events.</p>' +
+        (mine.length ? '<div class="list">' + mine.map(function (a) {
+          return '<div class="item"><div class="top"><b>' + SENS[a.sensor].name + ': <span class="mono">' + fv(a.sensor, a.value) + ' ' + SENS[a.sensor].unit + '</span></b>' + pill(a.level) + '</div><div class="muted" style="font-size:13px">' + fmt(a.time) + '</div><div class="chips"><span class="chip">Website</span><span class="chip">Administrators</span><span class="chip">SMS (demo)</span><span class="chip">Email (demo)</span><span class="chip">WhatsApp (demo)</span></div></div>';
+        }).join('') + '</div><div><button class="btn sm danger" data-act="clearalerts">Clear my alerts</button></div>' : '<div class="empty">No alerts yet. Use the demo control on the Water tab to simulate contaminated water.</div>') +
+        '<div class="note" style="font-size:13px">Website alerts are recorded here. SMS, email and WhatsApp need a messaging service connected to a server, so this prototype only marks them as demo channels.</div>';
+    } else if (ui.tab === 'report') {
+      mine = DB.problems.filter(function (p) { return p.email === u.email; }).sort(function (a, b) { return b.time - a.time; });
+      body = '<h2>Report a problem</h2><form class="f panel" id="problem-form" novalidate style="margin-top:0"><div class="row2"><div class="fld"><label for="pb-cat">Category</label><select id="pb-cat"><option>Water quality</option><option>Sensor or device</option><option>Billing</option><option>Other</option></select></div><div class="fld"><label for="pb-sub">Subject</label><input id="pb-sub" required></div></div><div class="fld"><label for="pb-txt">What happened?</label><textarea id="pb-txt" required></textarea></div><div class="err" id="formErr" role="alert"></div><div><button class="btn primary" type="submit">Submit problem</button></div></form>' +
+        '<h3>Your reports</h3>' + (mine.length ? '<div class="list">' + mine.map(function (p) {
+          return '<div class="item"><div class="top"><b>' + esc(p.subject) + '</b><span class="pill ' + (p.status === 'resolved' ? 'ok' : 'warn') + '">' + (p.status === 'resolved' ? 'Resolved' : 'Open') + '</span></div><div class="muted" style="font-size:13px">' + esc(p.category) + ' · ' + fmt(p.time) + '</div><p>' + esc(p.text) + '</p></div>';
+        }).join('') + '</div>' : '<div class="empty">You have not reported any problems.</div>');
+    } else if (ui.tab === 'reviews') {
+      var all = DB.reviews.slice().sort(function (a, b) { return b.time - a.time; });
+      body = '<h2>Reviews</h2><form class="f panel" id="review-form" novalidate style="margin-top:0"><div class="fld" style="max-width:200px"><label for="rv-rate">Rating</label><select id="rv-rate"><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select></div><div class="fld"><label for="rv-txt">Your review</label><textarea id="rv-txt" required></textarea></div><div class="err" id="formErr" role="alert"></div><div><button class="btn primary" type="submit">Post review</button></div></form>' +
+        '<h3>What customers say</h3><div class="list">' + all.map(function (r) {
+          return '<div class="item"><div class="top"><b>' + esc(r.name) + '</b><span style="color:var(--warn)" aria-label="' + r.rating + ' out of 5">' + stars(r.rating) + '</span></div><p>' + esc(r.text) + '</p><div class="muted" style="font-size:12px">' + fmt(r.time) + '</div></div>';
+        }).join('') + '</div>';
+    } else if (ui.tab === 'plan') {
+      body = '<h2>Subscription</h2><p class="muted">' + (u.plan ? 'Current plan: <b style="color:var(--fg)">' + esc(u.plan.type.charAt(0).toUpperCase() + u.plan.type.slice(1)) + '</b> since ' + fmt(u.plan.since) : 'You have no plan yet.') + '</p>';
+      if (ui.checkout) {
+        var p = PLANS.filter(function (x) { return x.k === ui.checkout; })[0];
+        body += '<div class="panel"><h3>Confirm ' + p.name + ' plan</h3><p class="muted" style="margin:8px 0 14px">₹' + p.price.toLocaleString('en-IN') + ' ' + p.per + '. This is a demo checkout. No money is taken and no card details are collected.</p><div class="cta" style="margin:0"><button class="btn primary" data-act="confirmbuy">Confirm demo purchase</button><button class="btn" data-act="cancelbuy">Cancel</button></div></div>';
+      }
+      body += planCards('app');
+    } else if (ui.tab === 'device') {
+      body = '<h2>Device</h2><p class="muted">Choose where the readings come from.</p><div class="panel"><div class="cta" style="margin:0"><button class="btn ' + (device.mode === 'demo' ? 'primary' : '') + '" data-act="mode" data-m="demo">Demo readings</button><button class="btn ' + (device.mode === 'live' ? 'primary' : '') + '" data-act="mode" data-m="live">Live ESP32</button></div>' +
+        '<form class="f" id="device-form" novalidate><div class="fld"><label for="dv-url">ESP32 readings address</label><input id="dv-url" placeholder="https://your-device-or-server/readings" value="' + esc(device.url) + '"></div><div><button class="btn" type="submit">Save address</button></div></form><p id="devMsg" class="' + (deviceMsg.ok ? 'okmsg' : 'err') + '" style="margin-top:10px">' + esc(deviceMsg.t) + '</p></div>' +
+        '<h3>ESP32 sketch outline</h3><p class="muted">The site expects JSON with the keys ph, turbidity, tds and temperature.</p><pre class="code" id="fw"></pre>';
+    }
+    return '<div class="wrap"><div class="app-top"><div class="who">' + DROP.replace('class="x"', '') + '<b>' + esc(u.name) + '</b><span class="pill mut">Customer</span>' + (u.plan ? '<span class="pill ok">' + esc(u.plan.type) + '</span>' : '') + '</div><button class="btn sm" data-act="logout">Log out</button></div>' +
+      '<div class="tabs" role="tablist">' + tabs + '</div><div class="main">' + body + '</div></div>';
+  }
+
+  /* ---------- views: admin ---------- */
+  function adminView(a) {
+    var T = [['overview', 'Overview'], ['customers', 'Customers'], ['alerts', 'Alerts'], ['problems', 'Problems'], ['reviews', 'Reviews'], ['admins', 'Administrators']];
+    var tabs = T.map(function (t) { return '<button class="tab" role="tab" data-act="tab" data-t="' + t[0] + '" aria-selected="' + (ui.tab === t[0]) + '">' + t[1] + '</button>'; }).join('');
+    var body = '', open = DB.problems.filter(function (p) { return p.status !== 'resolved'; });
+    if (ui.tab === 'overview') {
+      var avg = DB.reviews.length ? (DB.reviews.reduce(function (s, r) { return s + r.rating; }, 0) / DB.reviews.length).toFixed(1) : '0';
+      var subs = DB.users.filter(function (u) { return u.plan; }).length;
+      body = '<h2>Overview</h2><div class="stats"><div class="stat"><div class="v">' + DB.users.length + '</div><div class="l">Registered customers</div></div><div class="stat"><div class="v">' + subs + '</div><div class="l">With a plan</div></div><div class="stat"><div class="v">' + DB.alerts.length + '</div><div class="l">Alerts recorded</div></div><div class="stat"><div class="v">' + open.length + '</div><div class="l">Open problems</div></div><div class="stat"><div class="v">' + avg + '</div><div class="l">Average rating</div></div></div>' +
+        '<h3>Latest alerts</h3>' + alertList(DB.alerts.slice().sort(function (x, y) { return y.time - x.time; }).slice(0, 5));
+    } else if (ui.tab === 'customers') {
+      body = '<h2>Customers</h2>' + (DB.users.length ? '<div class="panel scroll-x" style="padding:6px"><table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Area</th><th>Plan</th><th>Joined</th></tr></thead><tbody>' + DB.users.map(function (u) {
+        return '<tr><td>' + esc(u.name) + '</td><td>' + esc(u.email) + '</td><td>' + esc(u.phone) + '</td><td>' + esc(u.location) + '</td><td>' + (u.plan ? esc(u.plan.type) : '<span class="muted">None</span>') + '</td><td>' + fmt(u.created) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div class="empty">No customers have registered in this browser yet.</div>');
+    } else if (ui.tab === 'alerts') {
+      body = '<h2>All alerts</h2>' + alertList(DB.alerts.slice().sort(function (x, y) { return y.time - x.time; }));
+    } else if (ui.tab === 'problems') {
+      body = '<h2>Problems</h2>' + (DB.problems.length ? '<div class="list">' + DB.problems.slice().sort(function (x, y) { return y.time - x.time; }).map(function (p) {
+        return '<div class="item"><div class="top"><b>' + esc(p.subject) + '</b><span class="pill ' + (p.status === 'resolved' ? 'ok' : 'warn') + '">' + (p.status === 'resolved' ? 'Resolved' : 'Open') + '</span></div><div class="muted" style="font-size:13px">' + esc(p.customer) + ' · ' + esc(p.email) + ' · ' + esc(p.category) + ' · ' + fmt(p.time) + '</div><p>' + esc(p.text) + '</p>' + (p.status === 'resolved' ? '' : '<div><button class="btn sm primary" data-act="resolve" data-id="' + esc(p.id) + '">Mark resolved</button></div>') + '</div>';
+      }).join('') + '</div>' : '<div class="empty">No problems reported.</div>');
+    } else if (ui.tab === 'reviews') {
+      body = '<h2>Reviews</h2><div class="list">' + DB.reviews.slice().sort(function (x, y) { return y.time - x.time; }).map(function (r) {
+        return '<div class="item"><div class="top"><b>' + esc(r.name) + '</b><span style="color:var(--warn)">' + stars(r.rating) + '</span></div><p>' + esc(r.text) + '</p><div class="muted" style="font-size:12px">' + fmt(r.time) + '</div></div>';
+      }).join('') + '</div>';
+    } else if (ui.tab === 'admins') {
+      body = '<h2>Administrators</h2><div class="list">' + DB.admins.map(function (x) {
+        return '<div class="item"><div class="top"><b>' + esc(x.name) + '</b>' + (x.main ? '<span class="pill mut">Main</span>' : '<span class="pill mut">Admin</span>') + '</div><div class="muted" style="font-size:13px">' + esc(x.email) + '</div></div>';
+      }).join('') + '</div><h3>Add an administrator</h3><form class="f panel" id="admin-add-form" novalidate style="margin-top:0"><div class="row2"><div class="fld"><label for="aa-name">Name</label><input id="aa-name" required></div><div class="fld"><label for="aa-email">Email</label><input id="aa-email" type="email" required></div></div><div class="fld"><label for="aa-pass">Password (6 or more characters)</label><input id="aa-pass" type="password" autocomplete="new-password" required></div><div class="err" id="formErr" role="alert"></div><div><button class="btn primary" type="submit">Add administrator</button></div></form>';
+    }
+    return '<div class="wrap"><div class="app-top"><div class="who">' + DROP + '<b>' + esc(a.name) + '</b><span class="pill bad">Administrator</span></div><button class="btn sm" data-act="logout">Log out</button></div><div class="tabs" role="tablist">' + tabs + '</div><div class="main">' + body + '</div></div>';
+  }
+  function alertList(list) {
+    if (!list.length) return '<div class="empty">No alerts recorded yet.</div>';
+    return '<div class="list">' + list.map(function (a) {
+      return '<div class="item"><div class="top"><b>' + esc(a.customer) + ' · ' + SENS[a.sensor].name + ' <span class="mono">' + fv(a.sensor, a.value) + ' ' + SENS[a.sensor].unit + '</span></b>' + pill(a.level) + '</div><div class="muted" style="font-size:13px">' + esc(a.email) + ' · ' + fmt(a.time) + '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    var main = '';
+    if (ui.view === 'home') main = homeView();
+    else if (ui.view === 'login' || ui.view === 'register' || ui.view === 'admin-login') main = authView(ui.view);
+    else if (ui.view === 'dashboard') {
+      if (session && session.role === 'admin') {
+        var ad = DB.admins.filter(function (x) { return x.email === session.email; })[0];
+        main = ad ? adminView(ad) : '';
+        if (!ad) { logout(); return; }
+      } else {
+        var u = currentUser();
+        if (!u) { logout(); return; }
+        main = customerView(u);
+      }
+    }
+    var showBar = ui.view !== 'dashboard';
+    $('#app').innerHTML = (showBar ? topBar() : '') + main + (showBar ? footer() : '');
+    var fw = $('#fw'); if (fw) fw.textContent = $('#fwsnip').textContent;
+    updateBadge();
+  }
+  function logout() {
+    session = null; S.set('session', null);
+    ui.tab = 'overview'; ui.checkout = null;
+    go('home');
+  }
+
+  /* ---------- actions ---------- */
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]');
+    if (!t) return;
+    var a = t.getAttribute('data-act'), d = t.dataset;
+    if (a === 'go') go(d.to);
+    else if (a === 'scroll') { var el = document.getElementById(d.to); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+    else if (a === 'logout') logout();
+    else if (a === 'tab') { ui.tab = d.t; ui.checkout = null; render(); }
+    else if (a === 'sensor') { ui.sensor = d.k; renderLive(); document.querySelectorAll('.sensor').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-k') === d.k); }); }
+    else if (a === 'sim') { contaminated = !contaminated; render(); }
+    else if (a === 'choose') {
+      ui.checkout = null;
+      if (session && session.role === 'customer') { ui.tab = 'plan'; ui.checkout = d.plan; go('dashboard'); }
+      else go('register');
+    }
+    else if (a === 'buy') { ui.checkout = d.plan; render(); }
+    else if (a === 'cancelbuy') { ui.checkout = null; render(); }
+    else if (a === 'confirmbuy') {
+      var u = currentUser();
+      if (u && ui.checkout) { u.plan = { type: ui.checkout, since: Date.now() }; save(); toast('Demo purchase confirmed: ' + ui.checkout + ' plan.'); }
+      ui.checkout = null; render();
+    }
+    else if (a === 'clearalerts') {
+      var cu = currentUser();
+      if (cu) { DB.alerts = DB.alerts.filter(function (x) { return x.email !== cu.email; }); save(); render(); }
+    }
+    else if (a === 'resolve') {
+      DB.problems.forEach(function (p) { if (p.id === d.id) p.status = 'resolved'; });
+      save(); render();
+    }
+    else if (a === 'mode') {
+      device.mode = d.m; S.set('device', device);
+      if (d.m === 'live' && !device.url) deviceMsg = { ok: false, t: 'Save the ESP32 address below to start receiving live readings. Demo values are shown until then.' };
+      else deviceMsg = { ok: true, t: '' };
+      render();
+    }
+  });
+
+  function fail(msg) { var el = $('#formErr'); if (el) el.textContent = msg; }
+  function val(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  document.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var id = e.target.id, u;
+    if (id === 'register-form') {
+      var name = val('rg-name'), email = val('rg-email').toLowerCase(), phone = val('rg-phone'), loc = val('rg-loc'), pass = document.getElementById('rg-pass').value;
+      if (!name || !loc) return fail('Enter your name and village or area.');
+      if (!EMAIL.test(email)) return fail('Enter a valid email address.');
+      if (phone.replace(/\D/g, '').length < 10) return fail('Enter a mobile number with at least 10 digits.');
+      if (pass.length < 6) return fail('Use a password of 6 or more characters.');
+      if (DB.users.some(function (x) { return x.email === email; }) || DB.admins.some(function (x) { return x.email === email; })) return fail('That email is already registered. Log in instead.');
+      DB.users.push({ id: uid(), name: name, email: email, phone: phone, location: loc, password: pass, created: Date.now(), plan: null });
+      save();
+      session = { role: 'customer', email: email }; S.set('session', session);
+      ui.tab = 'overview'; ui.checkout = null;
+      go('dashboard');
+    } else if (id === 'login-form') {
+      var em = val('lg-email').toLowerCase(), pw = document.getElementById('lg-pass').value;
+      u = DB.users.filter(function (x) { return x.email === em && x.password === pw; })[0];
+      if (!u) return fail('Email or password is incorrect.');
+      session = { role: 'customer', email: u.email }; S.set('session', session);
+      ui.tab = 'overview'; go('dashboard');
+    } else if (id === 'admin-login-form') {
+      var ae = val('ad-email').toLowerCase(), ap = document.getElementById('ad-pass').value;
+      var ad = DB.admins.filter(function (x) { return x.email.toLowerCase() === ae && x.password === ap; })[0];
+      if (!ad) return fail('Administrator email or password is incorrect.');
+      session = { role: 'admin', email: ad.email }; S.set('session', session);
+      ui.tab = 'overview'; go('dashboard');
+    } else if (id === 'problem-form') {
+      u = currentUser();
+      var sub = val('pb-sub'), txt = val('pb-txt');
+      if (!u) return;
+      if (!sub || !txt) return fail('Add a subject and describe the problem.');
+      DB.problems.push({ id: uid(), email: u.email, customer: u.name, category: document.getElementById('pb-cat').value, subject: sub, text: txt, status: 'open', time: Date.now() });
+      save(); toast('Problem submitted. An administrator will review it.'); render();
+    } else if (id === 'review-form') {
+      u = currentUser();
+      var rt = val('rv-txt');
+      if (!u) return;
+      if (!rt) return fail('Write a short review first.');
+      DB.reviews.push({ id: uid(), name: u.name, rating: +document.getElementById('rv-rate').value, text: rt, time: Date.now() });
+      save(); toast('Thanks for your review.'); render();
+    } else if (id === 'admin-add-form') {
+      var n = val('aa-name'), m = val('aa-email').toLowerCase(), p = document.getElementById('aa-pass').value;
+      if (!n) return fail('Enter a name.');
+      if (!EMAIL.test(m)) return fail('Enter a valid email address.');
+      if (p.length < 6) return fail('Use a password of 6 or more characters.');
+      if (DB.admins.some(function (x) { return x.email.toLowerCase() === m; }) || DB.users.some(function (x) { return x.email === m; })) return fail('That email is already in use.');
+      DB.admins.push({ name: n, email: m, password: p, main: false });
+      save(); toast('Administrator added.'); render();
+    } else if (id === 'device-form') {
+      device.url = val('dv-url'); S.set('device', device);
+      deviceMsg = { ok: true, t: device.url ? 'Address saved.' : 'Address cleared.' };
+      updateDeviceMsg();
+    }
+  });
+
+  /* ---------- start ---------- */
+  ui.view = resolveView(location.hash.slice(1) || (session ? 'dashboard' : 'home'));
+  render();
+  setInterval(tick, 3000);
+})();
+</script>
